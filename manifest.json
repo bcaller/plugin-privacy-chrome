@@ -5,7 +5,7 @@
 	"author": "Ben Caller",
 	"homepage_url": "https://github.com/bcaller/plugin-privacy-chrome",
     "permissions": [
-    "tabs","<all_urls>"
+		"tabs","<all_urls>","webRequest","webRequestBlocking"
     ],
     "content_scripts": [
         {
@@ -17,6 +17,6 @@
         "run_at": "document_start",
 		"all_frames": true
         }
-    ], 
+    ],
     "manifest_version":2
 }
