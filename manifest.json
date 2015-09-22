@@ -1,0 +1,22 @@
+{
+    "name": "Plugin Privacy",
+    "description": "Stop your browser plugins from being fingerprinted. Protect your privacy by hiding navigator.plugins and navigator.mimeType.",
+    "version": "0.1",
+	"author": "Ben Caller",
+	"homepage_url": "https://github.com/bcaller/plugin-privacy-chrome",
+    "permissions": [
+    "tabs","<all_urls>"
+    ],
+    "content_scripts": [
+        {
+        "matches": [
+            "http://*/*",
+            "https://*/*"
+            ],
+        "js": ["content.js"],
+        "run_at": "document_start",
+		"all_frames": true
+        }
+    ], 
+    "manifest_version":2
+}
