@@ -2,21 +2,46 @@
 // Thanks to https://stackoverflow.com/questions/23202136/changing-navigator-useragent-using-chrome-extension
 var pluginPrivacy = '(' + function () {
 	'use strict';
+	if(!window.navigator.mimeTypes) return;
+	
 	var properties = {};
 	for(var property in window.navigator) {
+		var val = window.navigator[property];
 		properties[property] = {
-			value: window.navigator[property],
+			value: typeof(val) == 'function' ? val.bind(window.navigator) : val,
 			configurable: false,
 			enumerable: false,
 			writable: false
 		};
 	}
-	properties.plugins = properties.mimeTypes = {
+	properties.mimeTypes = {
 		value: undefined,
 		configurable: false,
 		enumerable: true,
 		writable: false
 	};
+	properties.plugins = {
+		value: {
+			length: 0,
+			refresh: function() {}
+		},
+		configurable: false,
+		enumerable: true,
+		writable: false
+	};
+	
+	//Expose Flash
+	//Comment this section out to remove Flash
+	var flashMime = window.navigator.mimeTypes["application/x-shockwave-flash"];
+	if(flashMime) {
+		var flash = flashMime.enabledPlugin;
+		properties.mimeTypes.value = {length:1}
+		properties.mimeTypes.value["application/x-shockwave-flash"] = flashMime;
+		properties.mimeTypes.value[0] = flashMime;
+		properties.plugins.value["length"] = 1;
+		properties.plugins.value[flash["name"]] = flash;
+	}
+	
 	var navigator = Object.create(window.navigator);
 	Object.defineProperties(navigator, properties);
 	try {
@@ -30,18 +55,13 @@ var pluginPrivacy = '(' + function () {
 	} catch(e) {/*Cannot redefine property: navigator*/}
 } + ')();';
 
-//GMail breaks. Probably some other apps will also break.
-if(!~location.href.indexOf('https://mail.google.com/_/scs')) {
+//Without CSP
+document.documentElement.setAttribute('onreset', pluginPrivacy);
+document.documentElement.dispatchEvent(new CustomEvent('reset'));
+document.documentElement.removeAttribute('onreset');
 
-	//Without CSP
-	document.documentElement.setAttribute('onreset', pluginPrivacy);
-	document.documentElement.dispatchEvent(new CustomEvent('reset'));
-	document.documentElement.removeAttribute('onreset');
-
-	//With CSP
-	var script = document.createElement('script');
-	script.textContent = pluginPrivacy;
-	(document.head||document.documentElement).appendChild(script);
-	script.parentNode.removeChild(script);
-
-}
+//With CSP
+var script = document.createElement('script');
+script.textContent = pluginPrivacy;
+(document.head||document.documentElement).appendChild(script);
+script.parentNode.removeChild(script);
