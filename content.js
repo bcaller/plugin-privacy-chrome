@@ -40,6 +40,7 @@ var pluginPrivacy = '(' + function () {
 		properties.mimeTypes.value[0] = flashMime;
 		properties.plugins.value["length"] = 1;
 		properties.plugins.value[flash["name"]] = flash;
+		properties.plugins.value[0] = flash;
 	}
 	
 	var navigator = Object.create(window.navigator);
