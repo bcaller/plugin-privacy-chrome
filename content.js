@@ -2,56 +2,56 @@
 // Thanks to https://stackoverflow.com/questions/23202136/changing-navigator-useragent-using-chrome-extension
 var pluginPrivacy = '(' + function () {
 	'use strict';
+	//Set the following line to false in order to hide the Flash plugin
+	//This may prevent websites which use Flash from working
+	var ALLOW_FLASH = false;
+	
 	if(!window.navigator.mimeTypes) return;
+	
+	function vecw(val, e, c, w) {
+		// Makes an object describing a property
+		return {
+			value: val,
+			enumerable: !!e,
+			configurable: !!c,
+			writable: !!w
+		}
+	}
 	
 	var properties = {};
 	for(var property in window.navigator) {
 		var val = window.navigator[property];
-		properties[property] = {
-			value: typeof(val) == 'function' ? val.bind(window.navigator) : val,
-			configurable: false,
-			enumerable: false,
-			writable: false
-		};
+		properties[property] = vecw(typeof(val) == 'function' ? val.bind(window.navigator) : val)
 	}
-	properties.mimeTypes = {
-		value: undefined,
-		configurable: false,
-		enumerable: true,
-		writable: false
-	};
-	properties.plugins = {
-		value: {
-			length: 0,
-			refresh: function() {}
-		},
-		configurable: false,
-		enumerable: true,
-		writable: false
-	};
+	properties.mimeTypes = vecw({}, true);
+	properties.plugins = vecw({}, true);
+	
+	Object.defineProperty(properties.plugins.value, "refresh", vecw(function() {}));
 	
 	//Expose Flash
-	//Comment this section out to remove Flash
-	var flashMime = window.navigator.mimeTypes["application/x-shockwave-flash"];
+	var flashMime = ALLOW_FLASH && window.navigator.mimeTypes["application/x-shockwave-flash"];
 	if(flashMime) {
 		var flash = flashMime.enabledPlugin;
-		properties.mimeTypes.value = {length:1}
-		properties.mimeTypes.value["application/x-shockwave-flash"] = flashMime;
-		properties.mimeTypes.value[0] = flashMime;
-		properties.plugins.value["length"] = 1;
-		properties.plugins.value[flash["name"]] = flash;
-		properties.plugins.value[0] = flash;
+		Object.defineProperties(properties.mimeTypes.value, {
+			'length': vecw(1),
+			"application/x-shockwave-flash": vecw(flashMime, true),
+			0: vecw(flashMime)
+		})
+		Object.defineProperties(properties.plugins.value, {
+			'length': vecw(1),
+			0: vecw(flash)
+		})
+		Object.defineProperty(properties.plugins.value, flash["name"], vecw(flash, true))
+	} else {
+		//Empty 'arrays'
+		Object.defineProperty(properties.plugins.value, 'length', vecw(0))
+		Object.defineProperty(properties.mimeTypes.value, 'length', vecw(0))
 	}
 	
 	var navigator = Object.create(window.navigator);
 	Object.defineProperties(navigator, properties);
 	try {
-		Object.defineProperty(window, 'navigator', {
-			value: navigator,
-			configurable: false,
-			enumerable: false,
-			writable: false
-		});
+		Object.defineProperty(window, 'navigator', vecw(navigator));
 		console.log("PluginPrivacy has removed the plugins and mimeTypes", location.href)
 	} catch(e) {/*Cannot redefine property: navigator*/}
 } + ')();';
